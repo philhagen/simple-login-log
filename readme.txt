@@ -15,7 +15,7 @@ Simple log of user logins. Tracks username, time of login, IP address and browse
 **Features include:** 
 
 1. ability to filter by username, month and year;
-2. export into CVS file;
+2. export into CSV file;
 3. log auto-truncation.
 
 == Installation ==

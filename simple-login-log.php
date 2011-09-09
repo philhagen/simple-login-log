@@ -11,35 +11,35 @@
 if( !class_exists( 'SimpleLoginLog' ) )
 {
  class SimpleLoginLog {
- 	private $table = 'simple_login_log';
- 	private $log_duration = null; //days
- 	private $opt_name = 'simple_login_log';
- 	private $opt = false;
- 	
- 	function __construct()
- 	{
- 		global $wpdb;
- 		$this->table = $wpdb->prefix . $this->table;
- 		$this->opt = get_option($this->opt_name);
+    private $table = 'simple_login_log';
+    private $log_duration = null; //days
+    private $opt_name = 'simple_login_log';
+    private $opt = false;
+    
+    function __construct()
+    {
+        global $wpdb;
+        $this->table = $wpdb->prefix . $this->table;
+        $this->opt = get_option($this->opt_name);
 
         if(isset($_GET['download-login-log']))
         {
-            $this->export_to_CVS();
+            $this->export_to_CSV();
         } 
 
 
- 		add_action( 'admin_menu', array(&$this, 'sll_admin_menu') );
- 		add_action('admin_init', array(&$this, 'settings_api_init') );
- 		
- 		//Action on successfull loging
- 		add_action( 'wp_login', array(&$this, 'login_success') ); 	
+        add_action( 'admin_menu', array(&$this, 'sll_admin_menu') );
+        add_action('admin_init', array(&$this, 'settings_api_init') );
+        
+        //Action on successfull loging
+        add_action( 'wp_login', array(&$this, 'login_success') );   
         
         //Style the log table
         add_action( 'admin_head', array(&$this, 'admin_header') );
 
         //Initialize scheduled events
         add_action( 'wp', array(&$this, 'init_scheduled_events') );        
- 	}
+    }
 
     function init_scheduled_events()
     {
@@ -64,51 +64,51 @@ if( !class_exists( 'SimpleLoginLog' ) )
         }
     }
 
- 	function install()
- 	{ 		
- 		global $wpdb;
- 		
-		$sql = "CREATE TABLE  " . $this->table . " 
-				(
-					id INT( 11 ) NOT NULL AUTO_INCREMENT ,
-					uid INT( 11 ) NOT NULL ,
-					user_login VARCHAR( 60 ) NOT NULL ,
-					time DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL ,					
-					ip VARCHAR( 100 ) NOT NULL ,
-					data LONGTEXT NOT NULL ,
-					PRIMARY KEY ( id ) ,
-					INDEX ( uid, status, ip )
-				);";
+    function install()
+    {       
+        global $wpdb;
+        
+        $sql = "CREATE TABLE  " . $this->table . " 
+                (
+                    id INT( 11 ) NOT NULL AUTO_INCREMENT ,
+                    uid INT( 11 ) NOT NULL ,
+                    user_login VARCHAR( 60 ) NOT NULL ,
+                    time DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL ,                  
+                    ip VARCHAR( 100 ) NOT NULL ,
+                    data LONGTEXT NOT NULL ,
+                    PRIMARY KEY ( id ) ,
+                    INDEX ( uid, status, ip )
+                );";
 
-		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-		dbDelta($sql);			
- 	}
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);          
+    }
 
- 	//Initializing Settings
-	function settings_api_init()
-	{
-		add_settings_section('simple_login_log', 'Simple Login Log', array(&$this, 'sll_settings'), 'general');				
-		add_settings_field('field_log_duration', 'Truncate Log Entries', array(&$this, 'field_log_duration'), 'general', 'simple_login_log');
-		register_setting( 'general', 'simple_login_log' );		
-	}
+    //Initializing Settings
+    function settings_api_init()
+    {
+        add_settings_section('simple_login_log', 'Simple Login Log', array(&$this, 'sll_settings'), 'general');             
+        add_settings_field('field_log_duration', 'Truncate Log Entries', array(&$this, 'field_log_duration'), 'general', 'simple_login_log');
+        register_setting( 'general', 'simple_login_log' );      
+    }
 
-	function sll_admin_menu()
-	{
-		add_submenu_page( 'users.php', __('Simple Login Log', 'sll'), __('Login Log', 'sll'), 'edit_users', 'login_log', array(&$this, 'log_manager') );
-	}
+    function sll_admin_menu()
+    {
+        add_submenu_page( 'users.php', __('Simple Login Log', 'sll'), __('Login Log', 'sll'), 'edit_users', 'login_log', array(&$this, 'log_manager') );
+    }
 
-	function sll_settings()
-	{													
-		//content that goes before the fields output
-	}
+    function sll_settings()
+    {                                                   
+        //content that goes before the fields output
+    }
 
-	function field_log_duration()
-	{
-		$duration = (null !== $this->opt['log_duration']) ? $this->opt['log_duration'] : $this->log_duration;
-		$output = '<input type="text" value="' . $duration . '" name="simple_login_log[log_duration]" size="10" class="code" /> days and older.';
-		echo $output;
-		echo "<p>Leave empty or enter 0 if you don't want the log to be truncated.</p>";              
-	}
+    function field_log_duration()
+    {
+        $duration = (null !== $this->opt['log_duration']) ? $this->opt['log_duration'] : $this->log_duration;
+        $output = '<input type="text" value="' . $duration . '" name="simple_login_log[log_duration]" size="10" class="code" /> days and older.';
+        echo $output;
+        echo "<p>Leave empty or enter 0 if you don't want the log to be truncated.</p>";              
+    }
 
     function admin_header()
     {
@@ -125,49 +125,49 @@ if( !class_exists( 'SimpleLoginLog' ) )
         echo '</style>';        
     }
 
- 	//Catch messages on successful login
- 	function login_success($user_login){
- 		
- 		$userdata = get_user_by('login', $user_login);
+    //Catch messages on successful login
+    function login_success($user_login){
+        
+        $userdata = get_user_by('login', $user_login);
 
- 		$uid = ($userdata->ID) ? $userdata->ID : 0;
+        $uid = ($userdata->ID) ? $userdata->ID : 0;
 
- 		//Stop if login form wasn't submitted
- 		if( !$_REQUEST['wp-submit'] )
- 			return;
- 				
-		if ( isset( $_REQUEST['redirect_to'] ) ) { $data['Login Redirect'] = $_REQUEST['redirect_to']; }		
-		$data['User Agent'] = $_SERVER['HTTP_USER_AGENT'];		
-		
-		$serialized_data = serialize($data);
-		
-		$values = array(
-			'uid'			=> $uid,
-			'user_login'	=> $user_login,
-			'time'			=> current_time('mysql'),		
-			'ip'			=> $_SERVER['REMOTE_ADDR'],
-			'data'			=> $serialized_data,
-			);
-		
-		$format = array('%d', '%s', '%s', '%s', '%s');
+        //Stop if login form wasn't submitted
+        if( !$_REQUEST['wp-submit'] )
+            return;
+                
+        if ( isset( $_REQUEST['redirect_to'] ) ) { $data['Login Redirect'] = $_REQUEST['redirect_to']; }        
+        $data['User Agent'] = $_SERVER['HTTP_USER_AGENT'];      
+        
+        $serialized_data = serialize($data);
+        
+        $values = array(
+            'uid'           => $uid,
+            'user_login'    => $user_login,
+            'time'          => current_time('mysql'),       
+            'ip'            => $_SERVER['REMOTE_ADDR'],
+            'data'          => $serialized_data,
+            );
+        
+        $format = array('%d', '%s', '%s', '%s', '%s');
 
-		$this->save_data($values, $format);
- 	}
+        $this->save_data($values, $format);
+    }
 
- 	function save_data($values, $format){
- 		global $wpdb;
+    function save_data($values, $format){
+        global $wpdb;
 
- 		$wpdb->insert( $this->table, $values, $format );
- 	}
+        $wpdb->insert( $this->table, $values, $format );
+    }
 
- 	function log_manager()
- 	{
- 		global $wpdb, $ssl_list_table;
- 		
- 		$log_table = new SLL_List_Table;
- 		
- 		$limit = 20;
- 		$offset = ( isset($_REQUEST['page']) ) ? $limit * $_REQUEST['page'] : 0; 
+    function log_manager()
+    {
+        global $wpdb, $ssl_list_table;
+        
+        $log_table = new SLL_List_Table;
+        
+        $limit = 20;
+        $offset = ( isset($_REQUEST['page']) ) ? $limit * $_REQUEST['page'] : 0; 
         
         if($_GET['filter'])
         {
@@ -180,14 +180,14 @@ if( !class_exists( 'SimpleLoginLog' ) )
             $where = "WHERE YEAR(time) = {$year} AND MONTH(time) = {$month}";
         }
 
- 		$sql = "SELECT * FROM $this->table $where ORDER BY time DESC LIMIT $limit OFFSET $offset";        
- 		$data = $wpdb->get_results($sql, 'ARRAY_A');
- 		 		
-		$log_table->items = $data;
- 		$log_table->prepare_items();
+        $sql = "SELECT * FROM $this->table $where ORDER BY time DESC LIMIT $limit OFFSET $offset";        
+        $data = $wpdb->get_results($sql, 'ARRAY_A');
+                
+        $log_table->items = $data;
+        $log_table->prepare_items();
 
-		echo '<div class="wrap srp">';
-		echo '<h2>Login Log</h2>';
+        echo '<div class="wrap srp">';
+        echo '<h2>Login Log</h2>';
         echo '<div class="tablenav top">';
             echo '<div class="alignleft actions">';
                 echo $this->date_filter();
@@ -199,14 +199,14 @@ if( !class_exists( 'SimpleLoginLog' ) )
             echo '</p>';
             echo '</form>';
         echo '</div>';
-		$log_table->display();
-		echo '</div>';
+        $log_table->display();
+        echo '</div>';
         echo '<form method="get" id="export-login-log">';
         echo '<input type="hidden" name="page" value="login_log" />';
         echo '<input type="hidden" name="download-login-log" value="true" />';
-        submit_button( __('Export Log to CVS'), 'secondary' ); 
+        submit_button( __('Export Log to CSV'), 'secondary' ); 
         echo '</form>';  
- 	}
+    }
 
     private function date_filter()
     {
@@ -236,7 +236,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
         return $output;
     }
 
-    function export_to_CVS(){
+    function export_to_CSV(){
         global $wpdb;
 
         $sql = "SELECT * FROM $this->table";        
@@ -247,7 +247,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
         // send response headers to the browser
         header( 'Content-Type: text/csv' );
-        header( 'Content-Disposition: attachment;filename=login_log.cvs');
+        header( 'Content-Disposition: attachment;filename=login_log.csv');
         $fp = fopen('php://output', 'w');
                 
         $i = 0;
@@ -273,9 +273,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
 if( class_exists( 'SimpleLoginLog' ) )
 {
-	$sll = new SimpleLoginLog;       
-	//Register for activation
-	register_activation_hook( __FILE__, array(&$sll, 'install') );	
+    $sll = new SimpleLoginLog;       
+    //Register for activation
+    register_activation_hook( __FILE__, array(&$sll, 'install') );  
     
 }
 
@@ -283,9 +283,9 @@ if(!class_exists('WP_List_Table')){
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
 class SLL_List_Table extends WP_List_Table
-{		
-	function __construct()
-	{
+{       
+    function __construct()
+    {
         global $status, $page;
                 
         //Set parent defaults
@@ -304,37 +304,37 @@ class SLL_List_Table extends WP_List_Table
             case 'uid':            
             case 'time':
             case 'ip':
-            	return $item[$column_name];  
+                return $item[$column_name];  
             case 'user_login':
-                return "<a href='" . get_admin_url() . "users.php?page=login_log&filter={$item[$column_name]}' title='Filter log by this name'>{$item[$column_name]}</a>";                          	
+                return "<a href='" . get_admin_url() . "users.php?page=login_log&filter={$item[$column_name]}' title='Filter log by this name'>{$item[$column_name]}</a>";                              
             case 'name';
-            	$user_info = get_userdata($item['uid']);
-            	return $user_info->first_name .  " " . $user_info->last_name;                    	
+                $user_info = get_userdata($item['uid']);
+                return $user_info->first_name .  " " . $user_info->last_name;                       
             case 'data':
-            	$data = unserialize($item[$column_name]);
-            	if(is_array($data))
-            	{
-            		foreach($data as $k => $v)
-            		{
-            			$output .= $k .': '. $v .'<br />';
-            		}
-            		return $output;
-            	}            	
-            	break;	
+                $data = unserialize($item[$column_name]);
+                if(is_array($data))
+                {
+                    foreach($data as $k => $v)
+                    {
+                        $output .= $k .': '. $v .'<br />';
+                    }
+                    return $output;
+                }               
+                break;  
             default:
-            	print_r($item);            	                            
+                print_r($item);                                         
         }
     }
 
     function get_columns()
     {
         $columns = array(
-            'id'     		=> '#',
-            'uid'    		=> 'User ID',
-            'user_login'  	=> 'Username',
+            'id'            => '#',
+            'uid'           => 'User ID',
+            'user_login'    => 'Username',
             'name'          => 'Name',
-            'time'			=> 'Time',
-            'ip'			=> 'IP Address',
+            'time'          => 'Time',
+            'ip'            => 'IP Address',
             'data'          => 'Data',
         );
         return $columns;
@@ -344,9 +344,9 @@ class SLL_List_Table extends WP_List_Table
     {
         $sortable_columns = array(
             //'id'    => array('id',true),     //doesn't sort correctly
-            'uid' 	=> array('uid',false),
-            'time'	=> array('time',true),
-            'ip'	=> array('ip', false),
+            'uid'   => array('uid',false),
+            'time'  => array('time',true),
+            'ip'    => array('ip', false),
         );
         return $sortable_columns;
     }
