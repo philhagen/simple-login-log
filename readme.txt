@@ -4,7 +4,7 @@ Donate link: http://www.ibsteam.net/donate
 Tags: login, log, users
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 0.1
+Stable tag: 0.2
 
 This plugin keeps a log of WordPress user logins. Offers user and date filtering, and export features.
 

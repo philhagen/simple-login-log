@@ -8,6 +8,9 @@
   Author URI: http://SimpleRealtyTheme.com
  */
 
+
+//TODO: add cleanup method on uninstall
+
 if( !class_exists( 'SimpleLoginLog' ) )
 {
  class SimpleLoginLog {
@@ -77,7 +80,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
                     ip VARCHAR( 100 ) NOT NULL ,
                     data LONGTEXT NOT NULL ,
                     PRIMARY KEY ( id ) ,
-                    INDEX ( uid, status, ip )
+                    INDEX ( uid, ip )
                 );";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
