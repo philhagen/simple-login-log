@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.2
+  Version: 0.3
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -18,6 +18,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
     private $log_duration = null; //days
     private $opt_name = 'simple_login_log';
     private $opt = false;
+    private $login_success = 1;
     
     function __construct()
     {
@@ -34,14 +35,37 @@ if( !class_exists( 'SimpleLoginLog' ) )
         add_action( 'admin_menu', array(&$this, 'sll_admin_menu') );
         add_action('admin_init', array(&$this, 'settings_api_init') );
         
-        //Action on successfull loging
-        add_action( 'wp_login', array(&$this, 'login_success') );   
+        //Init login actions
+        add_action( 'init', array(&$this, 'init_login_actions') );        
         
         //Style the log table
         add_action( 'admin_head', array(&$this, 'admin_header') );
 
         //Initialize scheduled events
         add_action( 'wp', array(&$this, 'init_scheduled_events') );        
+    }
+
+    function init_login_actions(){
+        //condition to check if "log failed attemts" option is selected
+
+        //Action on successfull login
+        add_action( 'wp_login', array(&$this, 'login_success') );   
+
+        //Action on failed login                
+        if( isset($this->opt['failed_attempts']) ){            
+            add_action( 'wp_login_failed', array(&$this, 'login_failed') );
+        }
+
+    }
+
+    function login_success( $user_login ){
+        $this->login_success = 1;
+        $this->login_action( $user_login );
+    }
+
+    function login_failed( $user_login ){
+        $this->login_success = 0;
+        $this->login_action( $user_login );
     }
 
     function init_scheduled_events()
@@ -92,6 +116,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
     {
         add_settings_section('simple_login_log', 'Simple Login Log', array(&$this, 'sll_settings'), 'general');             
         add_settings_field('field_log_duration', 'Truncate Log Entries', array(&$this, 'field_log_duration'), 'general', 'simple_login_log');
+        add_settings_field('field_log_failed_attempts', 'Log Failed Attempts', array(&$this, 'field_log_failed_attempts'), 'general', 'simple_login_log');
         register_setting( 'general', 'simple_login_log' );      
     }
 
@@ -107,15 +132,20 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     function field_log_duration()
     {
-        $duration = (null !== $this->opt['log_duration']) ? $this->opt['log_duration'] : $this->log_duration;
+        $duration = (null !== $this->opt['log_duration']) ? $this->opt['log_duration'] : $this->log_duration;        
         $output = '<input type="text" value="' . $duration . '" name="simple_login_log[log_duration]" size="10" class="code" /> days and older.';
         echo $output;
         echo "<p>Leave empty or enter 0 if you don't want the log to be truncated.</p>";              
     }
 
+    function field_log_failed_attempts(){
+        $failed_attempts = ( isset($this->opt['failed_attempts']) ) ? $this->opt['failed_attempts'] : false;
+        echo '<input type="checkbox" name="simple_login_log[failed_attempts]" value="1" ' . checked( $failed_attempts, 1, false ) . ' /> Logs failed attempts where user name and password are entered. Will not log if at least one of the mentioned fields is empty.';
+    }
+
     function admin_header()
     {
-        if($_GET['page'] != 'login_log')
+        if( isset($_GET['page']) && 'login_log' != $_GET['page'] )
             return; 
 
         echo '<style type="text/css">';
@@ -125,28 +155,30 @@ if( !class_exists( 'SimpleLoginLog' ) )
         echo '.wp-list-table .column-name { width: 15%; }';
         echo '.wp-list-table .column-time { width: 15%; }';
         echo '.wp-list-table .column-ip { width: 10%; }';
+        echo '.wp-list-table .login-failed { background: #ffd5d1; }';
         echo '</style>';        
     }
 
     //Catch messages on successful login
-    function login_success($user_login){
+    function login_action($user_login){
         
         $userdata = get_user_by('login', $user_login);
 
         $uid = ($userdata->ID) ? $userdata->ID : 0;
 
         //Stop if login form wasn't submitted
-        if( !$_REQUEST['wp-submit'] )
-            return;
+        //if( !$_REQUEST['wp-submit'] )
+          //  return;
                 
+        $data['Login'] = ( 1 == $this->login_success ) ? 'Successful' : 'Failed';
         if ( isset( $_REQUEST['redirect_to'] ) ) { $data['Login Redirect'] = $_REQUEST['redirect_to']; }        
-        $data['User Agent'] = $_SERVER['HTTP_USER_AGENT'];      
+        $data['User Agent'] = $_SERVER['HTTP_USER_AGENT'];
         
         $serialized_data = serialize($data);
         
         $values = array(
             'uid'           => $uid,
-            'user_login'    => $user_login,
+            'user_login'    => $user_login,            
             'time'          => current_time('mysql'),       
             'ip'            => $_SERVER['REMOTE_ADDR'],
             'data'          => $serialized_data,
@@ -155,7 +187,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $format = array('%d', '%s', '%s', '%s', '%s');
 
         $this->save_data($values, $format);
-    }
+    }    
 
     function save_data($values, $format){
         global $wpdb;
@@ -170,20 +202,21 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $log_table = new SLL_List_Table;
         
         $limit = 20;
-        $offset = ( isset($_REQUEST['page']) ) ? $limit * $_REQUEST['page'] : 0; 
+        $offset = ( isset($_REQUEST['page']) ) ? 'OFFSET ' . $limit * $_REQUEST['page'] : 0; 
+        $where = '';
         
-        if($_GET['filter'])
+        if( isset($_GET['filter']) && '' != $_GET['filter'] )
         {
             $where = "WHERE user_login = '{$_GET['filter']}'";
         }
-        if($_GET['datefilter'])
+        if( isset($_GET['datefilter']) && '' != $_GET['datefilter'] )
         {
             $year = substr($_GET['datefilter'], 0, 4);
             $month = substr($_GET['datefilter'], -2);
             $where = "WHERE YEAR(time) = {$year} AND MONTH(time) = {$month}";
         }
 
-        $sql = "SELECT * FROM $this->table $where ORDER BY time DESC LIMIT $limit OFFSET $offset";        
+        $sql = "SELECT * FROM $this->table $where ORDER BY time DESC LIMIT $limit $offset";
         $data = $wpdb->get_results($sql, 'ARRAY_A');
                 
         $log_table->items = $data;
@@ -221,14 +254,14 @@ if( !class_exists( 'SimpleLoginLog' ) )
             return;
 
         
-
+        $option = '';
         foreach($results as $row)
         {
             //represent month in double digits            
             $timestamp = mktime(0, 0, 0, $row->month, 1, $row->year);
             $month = (strlen($row->month) == 1) ? '0' . $row->month : $row->month;
-
-            $option .= '<option value="' . $row->year . $month . '" ' . selected($row->year . $month, $_GET['datefilter'], false) . '>' . date('F', $timestamp) . ' ' . $row->year . '</option>';
+            $datefilter = ( isset($_GET['datefilter']) ) ? $_GET['datefilter'] : false;
+            $option .= '<option value="' . $row->year . $month . '" ' . selected($row->year . $month, $datefilter, false) . '>' . date('F', $timestamp) . ' ' . $row->year . '</option>';
         }
 
         $output = '<form method="get">';
@@ -312,14 +345,18 @@ class SLL_List_Table extends WP_List_Table
                 return "<a href='" . get_admin_url() . "users.php?page=login_log&filter={$item[$column_name]}' title='Filter log by this name'>{$item[$column_name]}</a>";                              
             case 'name';
                 $user_info = get_userdata($item['uid']);
-                return $user_info->first_name .  " " . $user_info->last_name;                       
+                return ( is_object($user_info) ) ? $user_info->first_name .  " " . $user_info->last_name : false;                                       
             case 'data':
-                $data = unserialize($item[$column_name]);
+            $data = unserialize($item[$column_name]);                
                 if(is_array($data))
                 {
+                    $output = '';
                     foreach($data as $k => $v)
                     {
                         $output .= $k .': '. $v .'<br />';
+                    }
+                    if( isset($data['Login']) && $data['Login'] == 'Failed' ){
+                        return '<div class="login-failed">' . $output . '</div>';    
                     }
                     return $output;
                 }               
