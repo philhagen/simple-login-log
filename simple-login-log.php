@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.4
+  Version: 0.5
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -704,7 +704,8 @@ class SLL_List_Table extends WP_List_Table
          * used to build the value for our _column_headers property.
          */
         $columns = $this->get_columns();
-        $hidden = get_user_option( 'manage' . $screen->id . 'columnshidden' );
+        $hidden_cols = get_user_option( 'manage' . $screen->id . 'columnshidden' );
+        $hidden = ( $hidden_cols ) ? $hidden_cols : array();
         $sortable = $this->get_sortable_columns();
         
         
