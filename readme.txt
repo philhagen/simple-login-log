@@ -4,7 +4,7 @@ Donate link: http://www.ibsteam.net/donate
 Tags: login, log, users
 Requires at least: 3.0
 Tested up to: 3.3
-Stable tag: 0.3
+Stable tag: 0.4
 
 This plugin keeps a log of WordPress user logins. Offers user and date filtering, and export features.
 
@@ -12,7 +12,7 @@ This plugin keeps a log of WordPress user logins. Offers user and date filtering
 
 Simple log of user logins. Tracks username, time of login, IP address and browser user agent.
 
-[http://screenr.com/kfEs](http://screenr.com/kfEs "*Demo Video*")
+[http://screenr.com/kfEs](http://screenr.com/kfEs "**Demo Video**")
 
 **Features include:** 
 
@@ -72,3 +72,7 @@ function link_location_by_ip($item){
 }
 ?>
 `
+
+= Translation =
+
+Currently there are no trunslations available. If you would like to contribute, the POT file is available in the *languages* folder. Translation file name convention is *sll-{locale}.mo*, where {locale} is the locale of your language. Fore example, Russian file name would be *sll-ru_RU.po*.
