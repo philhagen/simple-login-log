@@ -12,7 +12,7 @@ This plugin keeps a log of WordPress user logins. Offers user and date filtering
 
 Simple log of user logins. Tracks username, time of login, IP address and browser user agent.
 
-[http://screenr.com/kfEs](http://screenr.com/kfEs "Demo Video")
+[**Demo Video**](http://screenr.com/kfEs "Demo Video")
 
 **Features include:** 
 
