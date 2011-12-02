@@ -12,7 +12,7 @@ This plugin keeps a log of WordPress user logins. Offers user and date filtering
 
 Simple log of user logins. Tracks username, time of login, IP address and browser user agent.
 
-[**Demo Video**](http://screenr.com/kfEs "Demo Video")
+[Demo Video](http://screenr.com/kfEs "Demo Video")
 
 **Features include:** 
 
@@ -58,6 +58,7 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 = Filters =
 
 ** Log Output Within the Table **
+
 *sll-output-data* - filters table row array where array keys are column names and values is the output
 For example, we can use this filter to link IP addresses to a geo-location service:
 `
