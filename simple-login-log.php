@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.5
+  Version: 0.6
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -13,13 +13,14 @@
 if( !class_exists( 'SimpleLoginLog' ) )
 {
  class SimpleLoginLog {
-    private $db_ver = "1.1";
+    private $db_ver = "1.2";
     public $table = 'simple_login_log';
     private $log_duration = null; //days
     private $opt_name = 'simple_login_log';
     private $opt = false;
     private $login_success = 1;   
     public $data_labels = array();
+
     
     function __construct()
     {
@@ -68,6 +69,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
             'id'                => __('#', 'sll'),
             'uid'               => __('User ID', 'sll'),
             'user_login'        => __('Username', 'sll'),
+            'user_role'         => __('User Role', 'sll'),
             'name'              => __('Name', 'sll'),
             'time'              => __('Time', 'sll'),
             'ip'                => __('IP Address', 'sll'),
@@ -77,7 +79,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     }
 
-    function load_locale() {            
+
+    function load_locale()
+    {            
             $locale = get_locale();
             if( empty( $locale ) )
                 $locale = 'en_US';                
@@ -86,7 +90,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
             load_textdomain( 'sll', $mofile );
     }
 
-    function screen_options() {
+
+    function screen_options()
+    {
 
         //execute only on login_log page, othewise return null
         $page = ( isset($_GET['page']) ) ? esc_attr($_GET['page']) : false;
@@ -119,7 +125,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $_wp_column_headers[ $current_screen->id ] = SLL_List_Table::get_columns();
     }
 
-    function init_login_actions(){
+
+    function init_login_actions()
+    {
         //condition to check if "log failed attemts" option is selected
 
         //Action on successfull login
@@ -132,15 +140,20 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     }
 
-    function login_success( $user_login ){
+
+    function login_success( $user_login )
+    {
         $this->login_success = 1;
         $this->login_action( $user_login );
     }
 
-    function login_failed( $user_login ){
+
+    function login_failed( $user_login )
+    {
         $this->login_success = 0;
         $this->login_action( $user_login );
     }
+
 
     function init_scheduled_events()
     {
@@ -154,6 +167,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
             
         }
     }
+
 
     function truncate_log()
     {
@@ -182,6 +196,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
                         id INT( 11 ) NOT NULL AUTO_INCREMENT ,
                         uid INT( 11 ) NOT NULL ,
                         user_login VARCHAR( 60 ) NOT NULL ,
+                        user_role VARCHAR( 30 ) NOT NULL ,
                         time DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL ,                  
                         ip VARCHAR( 100 ) NOT NULL ,
                         login_result VARCHAR (1) ,
@@ -205,7 +220,8 @@ if( !class_exists( 'SimpleLoginLog' ) )
     * Checks if the installed database version is the same as the db version of the current plugin
     * calles the version specific function if upgrade is required
     */
-    function update_db_check() {
+    function update_db_check()
+    {
         if ( get_site_option( 'sll_db_ver' ) != $this->db_ver )
         {
             switch( $this->db_ver )
@@ -213,9 +229,13 @@ if( !class_exists( 'SimpleLoginLog' ) )
                 case "1.1":
                     $this->db_update_1_1();
                     break;
+                case "1.2":
+                    $this->db_update_1_2();
+                    break;
             }
         }
     }
+
 
     /**
     * DB version specific updates
@@ -251,6 +271,37 @@ if( !class_exists( 'SimpleLoginLog' ) )
         }
         
     }
+
+
+    function db_update_1_2()
+    {
+        /* this version adds a new field "user_role"
+         * check if this field exists
+         */
+        global $wpdb;
+
+        $sql = "SELECT * FROM {$this->table}";
+        $fields = $wpdb->get_row($sql, 'ARRAY_A');
+
+        if( !$fields ){
+            $this->install();
+            return;
+        }
+            
+        $field_names = array_keys( $fields );
+        
+        if( !array_search('user_role', $field_names) )
+        {               
+            //add the new field since it doesn't exist
+            $sql = "ALTER TABLE {$this->table} ADD COLUMN user_role varchar(30) NOT NULL AFTER user_login;";
+            $insert = $wpdb->query( $sql );
+            
+            //update version record if it has been updated
+            if( false !== $insert )
+                update_option( "sll_db_ver", $this->db_ver );
+        
+        }
+    }
     
 
     //Initializing Settings
@@ -263,15 +314,18 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     }
 
+
     function sll_admin_menu()
     {
         add_submenu_page( 'users.php', __('Simple Login Log', 'sll'), __('Login Log', 'sll'), 'edit_users', 'login_log', array(&$this, 'log_manager') );
     }
 
+
     function sll_settings()
     {                                                   
         //content that goes before the fields output
     }
+
 
     function field_log_duration()
     {
@@ -281,10 +335,13 @@ if( !class_exists( 'SimpleLoginLog' ) )
         echo "<p>" . __("Leave empty or enter 0 if you don't want the log to be truncated.", 'sll') . "</p>";              
     }
 
-    function field_log_failed_attempts(){
+
+    function field_log_failed_attempts()
+    {
         $failed_attempts = ( isset($this->opt['failed_attempts']) ) ? $this->opt['failed_attempts'] : false;
         echo '<input type="checkbox" name="simple_login_log[failed_attempts]" value="1" ' . checked( $failed_attempts, 1, false ) . ' /> ' . __('Logs failed attempts where user name and password are entered. Will not log if at least one of the mentioned fields is empty.', 'sll');
     }
+
 
     function admin_header()
     {
@@ -304,40 +361,57 @@ if( !class_exists( 'SimpleLoginLog' ) )
         echo '</style>';
     }
 
+
     //Catch messages on successful login
-    function login_action($user_login){
+    function login_action($user_login)
+    {
         
         $userdata = get_user_by('login', $user_login);
 
-        $uid = ($userdata->ID) ? $userdata->ID : 0;
+        $uid = ($userdata && $userdata->ID) ? $userdata->ID : 0;
                 
         $data[$this->data_labels['Login']] = ( 1 == $this->login_success ) ? $this->data_labels['Successful'] : $this->data_labels['Failed'];
         if ( isset( $_REQUEST['redirect_to'] ) ) { $data[$this->data_labels['Login Redirect']] = $_REQUEST['redirect_to']; }        
         $data[$this->data_labels['User Agent']] = $_SERVER['HTTP_USER_AGENT'];
         
         $serialized_data = serialize($data);
+
+        //get user role
+        $user_role = '';
+        if( $uid ){
+            $user = new WP_User( $uid );
+            if ( !empty( $user->roles ) && is_array( $user->roles ) ) {
+                $user_role = implode(', ', $user->roles);
+            }
+        }
+            
         
         $values = array(
             'uid'           => $uid,
-            'user_login'    => $user_login,            
+            'user_login'    => $user_login,
+            'user_role'     => $user_role,
             'time'          => current_time('mysql'),       
             'ip'            => $_SERVER['REMOTE_ADDR'],
             'login_result'  => $this->login_success,
             'data'          => $serialized_data,
             );
         
-        $format = array('%d', '%s', '%s', '%s', '%s', '%s');
+        $format = array('%d', '%s', '%s', '%s', '%s', '%s', '%s');
 
         $this->save_data($values, $format);
     }    
 
-    function save_data($values, $format){
+
+    function save_data($values, $format)
+    {
         global $wpdb;
 
         $wpdb->insert( $this->table, $values, $format );
     }
 
-    function make_where_query(){
+
+    function make_where_query()
+    {
         $where = false;        
         if( isset($_GET['filter']) && '' != $_GET['filter'] )
         {
@@ -357,7 +431,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
         return $where;
     }
 
-    function log_get_data(){
+
+    function log_get_data()
+    {
         global $wpdb;
 
         $limit = 20;        
@@ -373,6 +449,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
         return $data;
     }
+
 
     function log_manager()
     {                        
@@ -435,7 +512,8 @@ if( !class_exists( 'SimpleLoginLog' ) )
         echo '</div>';        
     }
 
-    private function date_filter()
+
+    function date_filter()
     {
         global $wpdb;
         $sql = "SELECT DISTINCT YEAR(time) as year, MONTH(time)as month FROM {$this->table} ORDER BY YEAR(time), MONTH(time) desc";
@@ -462,6 +540,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $output .= '</form>';
         return $output;
     }
+
 
     function export_to_CSV($where = false){
         global $wpdb;
@@ -508,6 +587,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
     }
 
  }
+
 }
 
 if( class_exists( 'SimpleLoginLog' ) )
@@ -518,9 +598,11 @@ if( class_exists( 'SimpleLoginLog' ) )
     
 }
 
-if(!class_exists('WP_List_Table')){
+if(!class_exists('WP_List_Table'))
+{
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
+
 class SLL_List_Table extends WP_List_Table
 {       
     function __construct()
@@ -536,7 +618,8 @@ class SLL_List_Table extends WP_List_Table
 
         $this->data_labels = $sll->data_labels;      
 
-    }        
+    }  
+          
 
     function column_default($item, $column_name)
     {
@@ -559,6 +642,15 @@ class SLL_List_Table extends WP_List_Table
             case 'login_result':
                 if ( '' == $item[$column_name]) return '';
                 return ( '1' == $item[$column_name] ) ? $this->data_labels['Successful'] : '<div class="login-failed">' . $this->data_labels['Failed'] . '</div>';
+            case 'user_role':
+                if( !$item['uid'] )
+                    return;
+                
+                $user = new WP_User( $item['uid'] );
+                if ( !empty( $user->roles ) && is_array( $user->roles ) ) {
+                    return implode(', ', $user->roles);
+                }
+                break;
             case 'data':
                 $data = unserialize($item[$column_name]);                
                 if(is_array($data))
@@ -582,6 +674,7 @@ class SLL_List_Table extends WP_List_Table
         }
     }
 
+
     function get_columns()
     {        
         global $status;
@@ -589,14 +682,16 @@ class SLL_List_Table extends WP_List_Table
             'id'            => $this->data_labels['id'],
             'uid'           => $this->data_labels['uid'],
             'user_login'    => $this->data_labels['user_login'],
+            'user_role'     => $this->data_labels['user_role'],
             'name'          => $this->data_labels['name'],
-            'time'          => $this->data_labels['time'],
+            'time'          => $this->data_labels['time'],            
             'ip'            => $this->data_labels['ip'],
             'login_result'  => $this->data_labels['login_result'],
             'data'          => $this->data_labels['data'],
         );                    
         return $columns;
     }
+
 
     function get_sortable_columns()
     {
@@ -609,6 +704,7 @@ class SLL_List_Table extends WP_List_Table
         );
         return $sortable_columns;
     }
+
 
     function get_views()
     {
@@ -684,6 +780,7 @@ class SLL_List_Table extends WP_List_Table
 
         return $views;
     }
+    
 
     function prepare_items()
     {
