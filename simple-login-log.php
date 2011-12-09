@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.6
+  Version: 0.7
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -417,6 +417,10 @@ if( !class_exists( 'SimpleLoginLog' ) )
         {
             $where['filter'] = "user_login = '{$_GET['filter']}'";
         }
+        if( isset($_GET['user_role']) && '' != $_GET['user_role'] )
+        {
+            $where['user_role'] = "user_role = '{$_GET['user_role']}'";
+        }
         if( isset($_GET['result']) && '' != $_GET['result'] )
         {
             $where['result'] = "login_result = '{$_GET['result']}'";
@@ -624,17 +628,19 @@ class SLL_List_Table extends WP_List_Table
     function column_default($item, $column_name)
     {
         $item = apply_filters('sll-output-data', $item);
+
+        //unset existing filter and pagination
+        $args = wp_parse_args( parse_url($_SERVER["REQUEST_URI"], PHP_URL_QUERY) ); 
+        unset($args['filter']);
+        unset($args['paged']);
+
         switch($column_name){
             case 'id':
             case 'uid':            
             case 'time':                
             case 'ip':
                 return $item[$column_name];
-            case 'user_login':
-                //unset existing filter and pagination
-                $args = wp_parse_args( parse_url($_SERVER["REQUEST_URI"], PHP_URL_QUERY) ); 
-                unset($args['filter']);
-                unset($args['paged']);
+            case 'user_login':                
                 return "<a href='" . add_query_arg( array('filter' => $item[$column_name]), menu_page_url('login_log', false) ) . "' title='" . __('Filter log by this name', 'sll') . "'>{$item[$column_name]}</a>";                              
             case 'name';
                 $user_info = get_userdata($item['uid']);
@@ -648,7 +654,10 @@ class SLL_List_Table extends WP_List_Table
                 
                 $user = new WP_User( $item['uid'] );
                 if ( !empty( $user->roles ) && is_array( $user->roles ) ) {
-                    return implode(', ', $user->roles);
+                    foreach($user->roles as $role){
+                        $roles[] = "<a href='" . add_query_arg( array('user_role' => $role), menu_page_url('login_log', false) ) . "' title='" . __('Filter log by User Role', 'sll') . "'>{$role}</a>";
+                    }
+                    return implode(', ', $roles);
                 }
                 break;
             case 'data':
