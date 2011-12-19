@@ -4,14 +4,14 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.7
+  Version: 0.8
   Author URI: http://SimpleRealtyTheme.com
  */
 
 //TODO: add cleanup method on uninstall
 
 if( !class_exists( 'SimpleLoginLog' ) )
-{
+{    
  class SimpleLoginLog {
     private $db_ver = "1.2";
     public $table = 'simple_login_log';
@@ -121,8 +121,8 @@ if( !class_exists( 'SimpleLoginLog' ) )
         add_screen_option($per_page_field, $args);     
         $_per_page = get_option('users_page_login_log_per_page');        
 
-        global $_wp_column_headers;
-        $_wp_column_headers[ $current_screen->id ] = SLL_List_Table::get_columns();
+        //needs to be initialized early enough to pre-fill screen options section in the upper (hidden) area.
+        $this->log_table = new SLL_List_Table;
     }
 
 
@@ -458,7 +458,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
     function log_manager()
     {                        
         
-        $log_table = new SLL_List_Table;                
+        $log_table = $this->log_table;
                 
         $log_table->items = $this->log_get_data();
         $log_table->prepare_items();        
@@ -632,7 +632,7 @@ class SLL_List_Table extends WP_List_Table
         //unset existing filter and pagination
         $args = wp_parse_args( parse_url($_SERVER["REQUEST_URI"], PHP_URL_QUERY) ); 
         unset($args['filter']);
-        unset($args['paged']);
+        unset($args['paged']);        
 
         switch($column_name){
             case 'id':
@@ -812,7 +812,7 @@ class SLL_List_Table extends WP_List_Table
         $columns = $this->get_columns();
         $hidden_cols = get_user_option( 'manage' . $screen->id . 'columnshidden' );
         $hidden = ( $hidden_cols ) ? $hidden_cols : array();
-        $sortable = $this->get_sortable_columns();
+        $sortable = $this->get_sortable_columns();                
         
         
         /**
@@ -822,7 +822,9 @@ class SLL_List_Table extends WP_List_Table
          * for sortable columns.
          */
         $this->_column_headers = array($columns, $hidden, $sortable);                 
+        $columns = get_column_headers( $screen );
         
+
         /**
          * Optional. You can handle your bulk actions however you see fit. In this
          * case, we'll handle them within our package just to keep things clean.
