@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.8
+  Version: 0.9
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -317,7 +317,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     function sll_admin_menu()
     {
-        add_submenu_page( 'users.php', __('Simple Login Log', 'sll'), __('Login Log', 'sll'), 'edit_users', 'login_log', array(&$this, 'log_manager') );
+        add_submenu_page( 'users.php', __('Simple Login Log', 'sll'), __('Login Log', 'sll'), 'list_users', 'login_log', array(&$this, 'log_manager') );
     }
 
 
