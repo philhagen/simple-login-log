@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.9
+  Version: 0.9.1
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -77,6 +77,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
             'data'              => __('Data', 'sll'),
         );
 
+        //Deactivation hook
+        register_deactivation_hook(__FILE__, 'deactivation');
+
     }
 
 
@@ -109,7 +112,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
         if( isset($_REQUEST['wp_screen_options']) && isset($_REQUEST['wp_screen_options']['value']) )
         {
             update_option( $per_page_option, esc_html($_REQUEST['wp_screen_options']['value']) );
-        }
+        }        
 
         //prepare options for display
 
@@ -157,15 +160,23 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     function init_scheduled_events()
     {
-        if ( $this->opt['log_duration'] && !wp_next_scheduled( 'truncate_log' ) ) 
+        $log_duration = get_option('simple_login_log');
+
+        if ( $log_duration && !wp_next_scheduled( 'SimpleLoginLog::truncate_log' ) ) 
+        {   
+            $start = time() - (24*61*60);
+            wp_schedule_event($start, 'hourly', 'SimpleLoginLog::truncate_log');
+        }elseif( !$log_duration || 0 == $log_duration)
         {
-            wp_schedule_event(time(), 'daily', 'truncate_log');
-        }elseif( !$this->opt['log_duration'] || 0 == $this->opt['log_duration'])
-        {
-            $timestamp = wp_next_scheduled( 'truncate_log' );
-            (!$timestamp) ? false : wp_unschedule_event($timestamp, 'truncate_log');
+            $timestamp = wp_next_scheduled( 'SimpleLoginLog::truncate_log' );
+            (!$timestamp) ? false : wp_unschedule_event($timestamp, 'SimpleLoginLog::truncate_log');
             
-        }
+        }        
+    }
+
+
+    function deactivation(){
+        wp_clear_scheduled_hook(array(&$this, 'truncate_log'));
     }
 
 
@@ -173,9 +184,14 @@ if( !class_exists( 'SimpleLoginLog' ) )
     {
         global $wpdb;
 
-        if( 0 < (int) $this->opt['log_duration'] ){
-            $sql = $wpdb->prepare( "DELETE FROM {$this->table} WHERE time < DATE_SUB(CURDATE(),INTERVAL %d DAY)", array($this->opt['log_duration']));
-            $wpdb->query($sql);
+        $opt = get_option('simple_login_log');
+        $log_duration = (int)$opt['log_duration'];
+                
+        $table = $wpdb->prefix . 'simple_login_log';
+
+        if( 0 < $log_duration ){            
+            $sql = $wpdb->prepare( "DELETE FROM {$table} WHERE time < DATE_SUB(CURDATE(),INTERVAL %d DAY)", $log_duration);
+            $wpdb->query($sql);            
         }
     }
 
@@ -449,6 +465,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
             $where = 'WHERE ' . implode(' AND ', $where);
 
         $sql = "SELECT * FROM $this->table $where ORDER BY time DESC LIMIT $limit";
+        $sql = "SELECT * FROM $this->table $where ORDER BY time DESC";
         $data = $wpdb->get_results($sql, 'ARRAY_A');
 
         return $data;
