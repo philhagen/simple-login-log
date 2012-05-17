@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.9.1
+  Version: 0.9.2
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -54,7 +54,8 @@ if( !class_exists( 'SimpleLoginLog' ) )
         add_action( 'admin_head', array(&$this, 'admin_header') );
 
         //Initialize scheduled events
-        add_action( 'wp', array(&$this, 'init_scheduled_events') );        
+        add_action( 'wp', array(&$this, 'init_scheduled_events') );
+        add_action('truncate_sll', array(&$this, 'cron') );
 
         //Load Locale
         add_action('init', array(&$this, 'load_locale'), 10 );
@@ -78,7 +79,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
         );
 
         //Deactivation hook
-        register_deactivation_hook(__FILE__, 'deactivation');
+        register_deactivation_hook(__FILE__, array(&$this, 'deactivation') );
 
     }
 
@@ -91,6 +92,12 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
             $mofile = dirname( __FILE__ )."/languages/sll-{$locale}.mo";
             load_textdomain( 'sll', $mofile );
+    }
+
+
+    function cron()
+    {        
+        SimpleLoginLog::truncate_log();
     }
 
 
@@ -159,24 +166,29 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
 
     function init_scheduled_events()
-    {
+    {        
+
         $log_duration = get_option('simple_login_log');
 
-        if ( $log_duration && !wp_next_scheduled( 'SimpleLoginLog::truncate_log' ) ) 
+        if ( $log_duration && !wp_next_scheduled( 'truncate_sll' ) ) 
         {   
-            $start = time() - (24*61*60);
-            wp_schedule_event($start, 'hourly', 'SimpleLoginLog::truncate_log');
+            $start = time();
+            wp_schedule_event($start, 'daily', 'truncate_sll');
         }elseif( !$log_duration || 0 == $log_duration)
         {
-            $timestamp = wp_next_scheduled( 'SimpleLoginLog::truncate_log' );
-            (!$timestamp) ? false : wp_unschedule_event($timestamp, 'SimpleLoginLog::truncate_log');
+            $timestamp = wp_next_scheduled( 'truncate_sll' );
+            (!$timestamp) ? false : wp_unschedule_event($timestamp, 'truncate_sll');
             
-        }        
+        }
     }
 
 
     function deactivation(){
-        wp_clear_scheduled_hook(array(&$this, 'truncate_log'));
+        wp_clear_scheduled_hook('truncate_sll');
+
+        //clean up old cron jobs that no longer exist
+        wp_clear_scheduled_hook('truncate_log');
+        wp_clear_scheduled_hook('SimpleLoginLog::truncate_log');        
     }
 
 
@@ -193,6 +205,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
             $sql = $wpdb->prepare( "DELETE FROM {$table} WHERE time < DATE_SUB(CURDATE(),INTERVAL %d DAY)", $log_duration);
             $wpdb->query($sql);            
         }
+        
     }
 
 
@@ -348,7 +361,13 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $duration = (null !== $this->opt['log_duration']) ? $this->opt['log_duration'] : $this->log_duration;        
         $output = '<input type="text" value="' . $duration . '" name="simple_login_log[log_duration]" size="10" class="code" /> days and older.';
         echo $output;
-        echo "<p>" . __("Leave empty or enter 0 if you don't want the log to be truncated.", 'sll') . "</p>";              
+        echo "<p>" . __("Leave empty or enter 0 if you don't want the log to be truncated.", 'sll') . "</p>";
+
+        //since we're on the General Settings page - update cron schedule if settings has been updated
+        if( isset($_REQUEST['settings-updated']) ){            
+            wp_clear_scheduled_hook('truncate_sll');            
+            //$this->init_scheduled_events();
+        }
     }
 
 
