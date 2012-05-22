@@ -40,6 +40,11 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 
 == Changelog ==
 
+**Version 0.9.3**
+
+- Improvement: search by partial user name as well as partial IP address per [Commeuneimage's recommendation](http://wordpress.org/support/topic/plugin-simple-login-log-small-enhancement-suggested-on-search-feature).
+- Updated POT file.
+
 **Version 0.9.2**
 
 - Daily cron job with log truncation didn't work.

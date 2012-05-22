@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.9.2
+  Version: 0.9.3
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -359,7 +359,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
     function field_log_duration()
     {
         $duration = (null !== $this->opt['log_duration']) ? $this->opt['log_duration'] : $this->log_duration;        
-        $output = '<input type="text" value="' . $duration . '" name="simple_login_log[log_duration]" size="10" class="code" /> days and older.';
+        $output = '<input type="text" value="' . $duration . '" name="simple_login_log[log_duration]" size="10" class="code" /> ' . __('days and older.', 'sll');
         echo $output;
         echo "<p>" . __("Leave empty or enter 0 if you don't want the log to be truncated.", 'sll') . "</p>";
 
@@ -450,7 +450,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $where = false;        
         if( isset($_GET['filter']) && '' != $_GET['filter'] )
         {
-            $where['filter'] = "user_login = '{$_GET['filter']}'";
+            $where['filter'] = "(user_login LIKE '%{$_GET['filter']}%' OR ip LIKE '%{$_GET['filter']}%')";
         }
         if( isset($_GET['user_role']) && '' != $_GET['user_role'] )
         {
@@ -473,17 +473,15 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     function log_get_data()
     {
-        global $wpdb;
-
-        $limit = 20;        
-        $where = '';                   
+        global $wpdb;        
+            
+        $where = '';
 
         $where = $this->make_where_query();
 
         if( is_array($where) && !empty($where) )
             $where = 'WHERE ' . implode(' AND ', $where);
-
-        $sql = "SELECT * FROM $this->table $where ORDER BY time DESC LIMIT $limit";
+        
         $sql = "SELECT * FROM $this->table $where ORDER BY time DESC";
         $data = $wpdb->get_results($sql, 'ARRAY_A');
 
@@ -836,6 +834,7 @@ class SLL_List_Table extends WP_List_Table
          */                 
         $per_page_option = $screen->id . '_per_page';        
         $per_page = get_option($per_page_option, 20);
+        $per_page = ($per_page != false) ? $per_page : 20;
         
         
         /**
