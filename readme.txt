@@ -44,6 +44,7 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 
 - Improvement: search by partial user name as well as partial IP address per [Commeuneimage's recommendation](http://wordpress.org/support/topic/plugin-simple-login-log-small-enhancement-suggested-on-search-feature).
 - Updated POT file.
+- Added Russian Translation.
 
 **Version 0.9.2**
 

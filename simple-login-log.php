@@ -722,17 +722,17 @@ class SLL_List_Table extends WP_List_Table
     {        
         global $status;
         $columns = array(
-            'id'            => $this->data_labels['id'],
-            'uid'           => $this->data_labels['uid'],
-            'user_login'    => $this->data_labels['user_login'],
-            'user_role'     => $this->data_labels['user_role'],
-            'name'          => $this->data_labels['name'],
-            'time'          => $this->data_labels['time'],            
-            'ip'            => $this->data_labels['ip'],
-            'login_result'  => $this->data_labels['login_result'],
-            'data'          => $this->data_labels['data'],
+            'id'            => __('#', 'sll'),
+            'uid'           => __('User ID', 'sll'),
+            'user_login'    => __('Username', 'sll'),
+            'user_role'     => __('User Role', 'sll'),
+            'name'          => __('Name', 'sll'),
+            'time'          => __('Time', 'sll'),
+            'ip'            => __('IP Address', 'sll'),
+            'login_result'  => __('Login Result', 'sll'),
+            'data'          => __('Data', 'sll'),
         );                    
-        return $columns;
+        return $columns;        
     }
 
 
