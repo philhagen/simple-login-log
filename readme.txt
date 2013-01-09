@@ -3,8 +3,8 @@ Contributors: Max Chirkov
 Donate link: http://www.ibsteam.net/donate
 Tags: login, log, users
 Requires at least: 3.0
-Tested up to: 3.3.2
-Stable tag: 0.9.3
+Tested up to: 3.5
+Stable tag: 0.9.4
 
 This plugin keeps a log of WordPress user logins. Offers user and date filtering, and export features.
 
@@ -39,6 +39,10 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 2. Login Log Management Screen.
 
 == Changelog ==
+
+**Version 0.9.4 - Highly Advised!**
+
+- Numerous vulnerability fixes!
 
 **Version 0.9.3**
 

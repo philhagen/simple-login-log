@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.9.3
+  Version: 0.9.4
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -25,19 +25,24 @@ if( !class_exists( 'SimpleLoginLog' ) )
     function __construct()
     {
         global $wpdb;
-        $this->table = $wpdb->prefix . $this->table;
+
+        if ( is_multisite() )
+        {
+            // get main site's table prefix
+            $main_prefix = $wpdb->get_blog_prefix(1);
+            $this->table = $main_prefix . $this->table;
+        }
+        else
+        {
+            // non-multisite - regular table name
+            $this->table = $wpdb->prefix . $this->table;
+        }
         $this->opt = get_option($this->opt_name);
 
         //Get plugin's DB version
         $this->installed_ver = get_option( "sll_db_ver" );
 
-        //Check if download was initiated
-        $download = @esc_attr( $_GET['download-login-log'] );
-        if($download)
-        {
-            $where = ( isset($_GET['where']) ) ? $_GET['where'] : false;
-            $this->export_to_CSV($where);
-        }
+
 
 
         add_action( 'admin_menu', array(&$this, 'sll_admin_menu') );
@@ -49,6 +54,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
         //Init login actions
         add_action( 'init', array(&$this, 'init_login_actions') );
+
+        //Init CSV Export
+        add_action('admin_init', array(&$this, 'init_csv_export') );
 
         //Style the log table
         add_action( 'admin_head', array(&$this, 'admin_header') );
@@ -401,8 +409,8 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $uid = ($userdata && $userdata->ID) ? $userdata->ID : 0;
 
         $data[$this->data_labels['Login']] = ( 1 == $this->login_success ) ? $this->data_labels['Successful'] : $this->data_labels['Failed'];
-        if ( isset( $_REQUEST['redirect_to'] ) ) { $data[$this->data_labels['Login Redirect']] = $_REQUEST['redirect_to']; }
-        $data[$this->data_labels['User Agent']] = $_SERVER['HTTP_USER_AGENT'];
+        if ( isset( $_REQUEST['redirect_to'] ) ) { $data[$this->data_labels['Login Redirect']] = esc_attr( $_REQUEST['redirect_to'] ); }
+        $data[$this->data_labels['User Agent']] = esc_attr( $_SERVER['HTTP_USER_AGENT'] );
 
         $serialized_data = serialize($data);
 
@@ -445,20 +453,24 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $where = false;
         if( isset($_GET['filter']) && '' != $_GET['filter'] )
         {
-            $where['filter'] = "(user_login LIKE '%{$_GET['filter']}%' OR ip LIKE '%{$_GET['filter']}%')";
+            $filter = esc_attr( $_GET['filter'] );
+            $where['filter'] = "(user_login LIKE '%{$filter}%' OR ip LIKE '%{$filter}%')";
         }
         if( isset($_GET['user_role']) && '' != $_GET['user_role'] )
         {
-            $where['user_role'] = "user_role = '{$_GET['user_role']}'";
+            $user_role = esc_attr( $_GET['user_role'] );
+            $where['user_role'] = "user_role = '{$user_role}'";
         }
         if( isset($_GET['result']) && '' != $_GET['result'] )
         {
-            $where['result'] = "login_result = '{$_GET['result']}'";
+            $result = esc_attr( $_GET['result'] );
+            $where['result'] = "login_result = '{$result}'";
         }
         if( isset($_GET['datefilter']) && '' != $_GET['datefilter'] )
         {
-            $year = substr($_GET['datefilter'], 0, 4);
-            $month = substr($_GET['datefilter'], -2);
+            $datefilter = esc_attr( $_GET['datefilter'] );
+            $year = substr($datefilter, 0, 4);
+            $month = substr($datefilter, -2);
             $where['datefilter'] = "YEAR(time) = {$year} AND MONTH(time) = {$month}";
         }
 
@@ -526,14 +538,26 @@ if( !class_exists( 'SimpleLoginLog' ) )
             $log_table->display();
 
             echo '<form method="get" id="export-login-log">';
+            if ( function_exists('wp_nonce_field') )
+                wp_nonce_field('ssl_export_log');
+
             echo '<input type="hidden" name="page" value="login_log" />';
             echo '<input type="hidden" name="download-login-log" value="true" />';
             submit_button( __('Export Log to CSV', 'sll'), 'secondary' );
             echo '</form>';
             //if filtered results - add export filtered results button
-            if( $where = $this->make_where_query() ){
-
+            $where = false;
+            if( isset( $_GET['filter'] ) || isset( $_GET['user_role'] ) || isset( $_GET['datefilter'] ) || isset( $_GET['result'] ) )
+            {
+                $where = array();
+                foreach($_GET as $k => $v)
+                {
+                    $where[$k] = @esc_attr($v);
+                }
                 echo '<form method="get" id="export-login-log">';
+                if ( function_exists('wp_nonce_field') )
+                    wp_nonce_field('ssl_export_log');
+
                 echo '<input type="hidden" name="page" value="login_log" />';
                 echo '<input type="hidden" name="download-login-log" value="true" />';
                 echo '<input type="hidden" name="where" value="' . esc_attr(serialize($where)) . '" />';
@@ -575,12 +599,35 @@ if( !class_exists( 'SimpleLoginLog' ) )
     }
 
 
+    function init_csv_export()
+    {
+        //Check if download was initiated
+        $download = @esc_attr( $_GET['download-login-log'] );
+        if($download)
+        {
+
+            $where = ( isset($_GET['where']) && '' != $_GET['where'] ) ? $_GET['where'] : false;
+            $where = maybe_unserialize( $where );
+
+            if( is_array($where) && !empty($where) )
+            {
+                foreach($where as $k => $v)
+                {
+                    $_GET[$k] = esc_attr($v);
+                }
+            }
+
+            check_admin_referer( 'ssl_export_log' );
+            $this->export_to_CSV( $this->make_where_query() );
+        }
+    }
+
+
     function export_to_CSV($where = false){
         global $wpdb;
 
         //if $where is set, then contemplate WHERE sql query
         if( $where ){
-            $where = unserialize($where);
 
             if( is_array($where) && !empty($where) )
                 $where = ' WHERE ' . implode(' AND ', $where);
