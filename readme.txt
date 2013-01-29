@@ -4,7 +4,7 @@ Donate link: http://www.ibsteam.net/donate
 Tags: login, log, users
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 0.9.4
+Stable tag: 0.9.5
 
 This plugin keeps a log of WordPress user logins. Offers user and date filtering, and export features.
 
@@ -20,6 +20,10 @@ Simple log of user logins. Tracks username, time of login, IP address and browse
 2. export into CSV file;
 3. log auto-truncation;
 4. option to record failed login attempts.
+
+**Translations:**
+
+- Persian [fa_IR] by [MohammadHadi Nasiri](http://taktaweb.ir/)
 
 * Author: Max Chirkov
 * Author URI: [http://simplerealtytheme.com/](http://simplerealtytheme.com/ "Real Estate Themes & Plugins for WordPress")
@@ -40,6 +44,11 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 
 == Changelog ==
 
+**Version 0.9.5**
+
+- Fixed: filtered log results weren't getting exported correctly.
+- Improvement: log real IP per [Alexander's recommendation](http://wordpress.org/support/topic/log-real-ip).
+
 **Version 0.9.4 - Highly Advised!**
 
 - Numerous vulnerability fixes!
@@ -48,7 +57,6 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 
 - Improvement: search by partial user name as well as partial IP address per [Commeuneimage's recommendation](http://wordpress.org/support/topic/plugin-simple-login-log-small-enhancement-suggested-on-search-feature).
 - Updated POT file.
-- Added Russian and Ukrainian Translation.
 - Added uninstall.php to all plugin's data from the database on plugin deletion.
 
 **Version 0.9.2**

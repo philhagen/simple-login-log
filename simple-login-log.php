@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.9.4
+  Version: 0.9.5
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -429,7 +429,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
             'user_login'    => $user_login,
             'user_role'     => $user_role,
             'time'          => current_time('mysql'),
-            'ip'            => $_SERVER['REMOTE_ADDR'],
+            'ip'            => isset( $_SERVER['HTTP_X_REAL_IP'] ) ? esc_attr( $_SERVER['HTTP_X_REAL_IP'] ) : esc_attr( $_SERVER['REMOTE_ADDR'] ),
             'login_result'  => $this->login_success,
             'data'          => $serialized_data,
             );
@@ -605,9 +605,10 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $download = @esc_attr( $_GET['download-login-log'] );
         if($download)
         {
+            check_admin_referer( 'ssl_export_log' );
 
             $where = ( isset($_GET['where']) && '' != $_GET['where'] ) ? $_GET['where'] : false;
-            $where = maybe_unserialize( $where );
+            $where = maybe_unserialize( stripcslashes($where) );
 
             if( is_array($where) && !empty($where) )
             {
@@ -617,7 +618,6 @@ if( !class_exists( 'SimpleLoginLog' ) )
                 }
             }
 
-            check_admin_referer( 'ssl_export_log' );
             $this->export_to_CSV( $this->make_where_query() );
         }
     }
