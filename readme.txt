@@ -48,6 +48,7 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 
 - Fixed: filtered log results weren't getting exported correctly.
 - Improvement: log real IP per [Alexander's recommendation](http://wordpress.org/support/topic/log-real-ip).
+- Added Persian translation.
 
 **Version 0.9.4 - Highly Advised!**
 
