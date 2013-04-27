@@ -3,20 +3,20 @@ Contributors: Max Chirkov
 Donate link: http://www.ibsteam.net/donate
 Tags: login, log, users
 Requires at least: 3.0
-Tested up to: 3.5
-Stable tag: 0.9.5
+Tested up to: 3.5.1
+Stable tag: 0.9.6
 
 This plugin keeps a log of WordPress user logins. Offers user and date filtering, and export features.
 
 == Description ==
 
-Simple log of user logins. Tracks username, time of login, IP address and browser user agent.
+Simple log of user logins. Tracks user name, time of login, IP address and browser user agent.
 
 [Demo Video](http://screenr.com/kfEs "Demo Video")
 
 **Features include:**
 
-1. ability to filter by username, successful/failed logins, month and year;
+1. ability to filter by user name, successful/failed logins, month and year;
 2. export into CSV file;
 3. log auto-truncation;
 4. option to record failed login attempts.
@@ -24,6 +24,9 @@ Simple log of user logins. Tracks username, time of login, IP address and browse
 **Translations:**
 
 - Persian [fa_IR] by [MohammadHadi Nasiri](http://taktaweb.ir/)
+- German [de_DE] by Philipp Moore
+- Russian [ru_RU]
+- Ukrainian [ru_RU]
 
 * Author: Max Chirkov
 * Author URI: [http://simplerealtytheme.com/](http://simplerealtytheme.com/ "Real Estate Themes & Plugins for WordPress")
@@ -32,7 +35,7 @@ Simple log of user logins. Tracks username, time of login, IP address and browse
 == Installation ==
 
 1. Install and activate like any other basic plugin.
-2. If you wish to set log trancation or opt-in to record failed login attempts, go to Settings => General. Scroll down to Simple Login Log.
+2. If you wish to set log truncation or opt-in to record failed login attempts, go to Settings => General. Scroll down to Simple Login Log.
 3. To view login log, go to Users => Login Log. You can export the log to CSV file form the same page.
 
 Screen Options are available at the top of the Login Log page. Click on the *Secreen Options* tab to expand the options section. You'll be able to change the number of results per page as well as hide/display table columns.
@@ -43,6 +46,11 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 2. Login Log Management Screen.
 
 == Changelog ==
+
+**Version 0.9.6**
+
+- Bug Fix: records weren't truncated in multi-site setup.
+- Added German, Russian and Ukrainian translations.
 
 **Version 0.9.5**
 
@@ -121,4 +129,4 @@ function link_location_by_ip($item){
 
 = Translation =
 
-Currently there are no translations available. If you would like to contribute, the POT file is available in the *languages* folder. Translation file name convention is *sll-{locale}.mo*, where {locale} is the locale of your language. Fore example, Russian file name would be *sll-ru_RU.po*.
+If you would like to contribute, the POT file is available in the *languages* folder. Translation file name convention is *sll-{locale}.mo*, where {locale} is the locale of your language. Fore example, Russian file name would be *sll-ru_RU.po*.

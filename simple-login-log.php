@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.9.5
+  Version: 0.9.6
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -202,10 +202,8 @@ if( !class_exists( 'SimpleLoginLog' ) )
         $opt = get_option('simple_login_log');
         $log_duration = (int)$opt['log_duration'];
 
-        $table = $wpdb->prefix . 'simple_login_log';
-
         if( 0 < $log_duration ){
-            $sql = $wpdb->prepare( "DELETE FROM {$table} WHERE time < DATE_SUB(CURDATE(),INTERVAL %d DAY)", $log_duration);
+            $sql = $wpdb->prepare( "DELETE FROM {$this->table} WHERE time < DATE_SUB(CURDATE(),INTERVAL %d DAY)", $log_duration);
             $wpdb->query($sql);
         }
 
@@ -723,7 +721,7 @@ class SLL_List_Table extends WP_List_Table
                 return ( is_object($user_info) ) ? $user_info->first_name .  " " . $user_info->last_name : false;
             case 'login_result':
                 if ( '' == $item[$column_name]) return '';
-                return ( '1' == $item[$column_name] ) ? $this->data_labels['Successful'] : '<div class="login-failed">' . $this->data_labels['Failed'] . '</div>';
+                return ( '1' == $item[$column_name] ) ? __($this->data_labels['Successful'], 'sll') : '<div class="login-failed">' . __($this->data_labels['Failed'], 'sll') . '</div>';
             case 'user_role':
                 if( !$item['uid'] )
                     return;
