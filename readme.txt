@@ -26,7 +26,7 @@ Simple log of user logins. Tracks user name, time of login, IP address and brows
 - Persian [fa_IR] by [MohammadHadi Nasiri](http://taktaweb.ir/)
 - German [de_DE] by Philipp Moore
 - Russian [ru_RU]
-- Ukrainian [ru_RU]
+- Ukrainian [ua_UA]
 
 * Author: Max Chirkov
 * Author URI: [http://simplerealtytheme.com/](http://simplerealtytheme.com/ "Real Estate Themes & Plugins for WordPress")
