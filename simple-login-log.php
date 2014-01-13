@@ -4,7 +4,7 @@
   Plugin URI: http://simplerealtytheme.com
   Description: This plugin keeps a log of WordPress user logins. Offers user filtering and export features.
   Author: Max Chirkov
-  Version: 0.9.6
+  Version: 1.0
   Author URI: http://SimpleRealtyTheme.com
  */
 
@@ -45,28 +45,28 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
 
 
-        add_action( 'admin_menu', array(&$this, 'sll_admin_menu') );
-        add_action('admin_init', array(&$this, 'settings_api_init') );
-        add_action('admin_head', array(&$this, 'screen_options') );
+        add_action( 'admin_menu', array($this, 'sll_admin_menu') );
+        add_action('admin_init', array($this, 'settings_api_init') );
+        add_action('admin_head', array($this, 'screen_options') );
 
         //check if db needs to be upgraded after plugin update was completed
-        add_action('plugins_loaded', array(&$this, 'update_db_check') );
+        add_action('plugins_loaded', array($this, 'update_db_check') );
 
         //Init login actions
-        add_action( 'init', array(&$this, 'init_login_actions') );
+        add_action( 'init', array($this, 'init_login_actions') );
 
         //Init CSV Export
-        add_action('admin_init', array(&$this, 'init_csv_export') );
+        add_action('admin_init', array($this, 'init_csv_export') );
 
         //Style the log table
-        add_action( 'admin_head', array(&$this, 'admin_header') );
+        add_action( 'admin_head', array($this, 'admin_header') );
 
-        //Initialize scheduled events
-        add_action( 'wp', array(&$this, 'init_scheduled_events') );
-        add_action('truncate_sll', array(&$this, 'cron') );
+        //Initialize scheduled events (when some one visits site in front-end)
+        add_action( 'wp', array($this, 'init_scheduled_events') );
+        add_action('truncate_sll', array($this, 'cron') );
 
         //Load Locale
-        add_action('plugins_loaded', array(&$this, 'load_locale'), 10 );
+        add_action('plugins_loaded', array($this, 'load_locale'), 10 );
 
         //For translation purposes
         $this->data_labels = array(
@@ -87,7 +87,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
         );
 
         //Deactivation hook
-        register_deactivation_hook(__FILE__, array(&$this, 'deactivation') );
+        register_deactivation_hook(__FILE__, array($this, 'deactivation') );
 
     }
 
@@ -144,11 +144,11 @@ if( !class_exists( 'SimpleLoginLog' ) )
         //condition to check if "log failed attemts" option is selected
 
         //Action on successfull login
-        add_action( 'wp_login', array(&$this, 'login_success') );
+        add_action( 'wp_login', array($this, 'login_success') );
 
         //Action on failed login
         if( isset($this->opt['failed_attempts']) ){
-            add_action( 'wp_login_failed', array(&$this, 'login_failed') );
+            add_action( 'wp_login_failed', array($this, 'login_failed') );
         }
 
     }
@@ -337,9 +337,9 @@ if( !class_exists( 'SimpleLoginLog' ) )
     //Initializing Settings
     function settings_api_init()
     {
-        add_settings_section('simple_login_log', __('Simple Login Log', 'sll'), array(&$this, 'sll_settings'), 'general');
-        add_settings_field('field_log_duration', __('Truncate Log Entries', 'sll'), array(&$this, 'field_log_duration'), 'general', 'simple_login_log');
-        add_settings_field('field_log_failed_attempts', __('Log Failed Attempts', 'sll'), array(&$this, 'field_log_failed_attempts'), 'general', 'simple_login_log');
+        add_settings_section('simple_login_log', __('Simple Login Log', 'sll'), array($this, 'sll_settings'), 'general');
+        add_settings_field('field_log_duration', __('Truncate Log Entries', 'sll'), array($this, 'field_log_duration'), 'general', 'simple_login_log');
+        add_settings_field('field_log_failed_attempts', __('Log Failed Attempts', 'sll'), array($this, 'field_log_failed_attempts'), 'general', 'simple_login_log');
         register_setting( 'general', 'simple_login_log' );
 
     }
@@ -347,7 +347,7 @@ if( !class_exists( 'SimpleLoginLog' ) )
 
     function sll_admin_menu()
     {
-        add_submenu_page( 'users.php', __('Simple Login Log', 'sll'), __('Login Log', 'sll'), 'list_users', 'login_log', array(&$this, 'log_manager') );
+        add_submenu_page( 'users.php', __('Simple Login Log', 'sll'), __('Login Log', 'sll'), 'list_users', 'login_log', array($this, 'log_manager') );
     }
 
 
