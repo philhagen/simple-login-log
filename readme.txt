@@ -4,7 +4,7 @@ Donate link: http://www.ibsteam.net/donate
 Tags: login, log, users
 Requires at least: 3.0
 Tested up to: 3.8
-Stable tag: 1.0
+Stable tag: 1.1.0
 
 This plugin keeps a log of WordPress user logins. Offers user and date filtering, and export features.
 
@@ -27,6 +27,8 @@ Simple log of user logins. Tracks user name, time of login, IP address and brows
 - German [de_DE] by Philipp Moore
 - Russian [ru_RU]
 - Ukrainian [ua_UA]
+- Chinese [zh_CN] by [Mihuwa](http://www.mihuwa.com/)
+- French [fr_FR] by [Mehdi Hamida](http://www.lo-geek.fr/)
 
 * Author: Max Chirkov
 * Author URI: [http://simplerealtytheme.com/](http://simplerealtytheme.com/ "Real Estate Themes & Plugins for WordPress")
@@ -38,7 +40,7 @@ Simple log of user logins. Tracks user name, time of login, IP address and brows
 2. If you wish to set log truncation or opt-in to record failed login attempts, go to Settings => General. Scroll down to Simple Login Log.
 3. To view login log, go to Users => Login Log. You can export the log to CSV file form the same page.
 
-Screen Options are available at the top of the Login Log page. Click on the *Secreen Options* tab to expand the options section. You'll be able to change the number of results per page as well as hide/display table columns.
+Screen Options are available at the top of the Login Log page. Click on the *Screen Options* tab to expand the options section. You'll be able to change the number of results per page as well as hide/display table columns.
 
 == Screenshots ==
 
@@ -46,6 +48,13 @@ Screen Options are available at the top of the Login Log page. Click on the *Sec
 2. Login Log Management Screen.
 
 == Changelog ==
+
+**Version 1.1.0**
+
+- Fixed: some SQL queries were requesting all records, which caused some sites to run out of memory.
+- Numerous minor fixes and improvements.
+- Added Chinese and French translations.
+- New Feature: Delete All link - deletes all log records at once.
 
 **Version 1.0**
 
